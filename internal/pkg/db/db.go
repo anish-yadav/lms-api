@@ -11,9 +11,11 @@ import (
 )
 
 var dbURI = ""
+var dbName = ""
 
-func Init(db string) {
-	dbURI = db
+func Init(dbAddr string, db string) {
+	dbURI = dbAddr
+	dbName = db
 }
 
 func connect(ctx context.Context) *mongo.Client {
@@ -26,8 +28,8 @@ func connect(ctx context.Context) *mongo.Client {
 	return client
 }
 
-func GetByID(dbNamespace string, collNamespace string, id string) bson.M {
-	log.Debugf("db.GeByID: %s , %s, %s", dbNamespace, collNamespace, id)
+func GetByID(collNamespace string, id string) bson.M {
+	log.Debugf("db.GeByID: %s , %s, %s", dbName, collNamespace, id)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client := connect(ctx)
@@ -40,7 +42,7 @@ func GetByID(dbNamespace string, collNamespace string, id string) bson.M {
 		log.Debugf("db connection closed")
 	}()
 
-	collection := client.Database(dbNamespace).Collection(collNamespace)
+	collection := client.Database(dbName).Collection(collNamespace)
 	var result bson.M
 	err := collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&result)
 	if err != nil {
