@@ -20,7 +20,7 @@ func NewRouter() *mux.Router {
 
 	v1.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := w.Write([]byte("success")); err != nil {
-			log.Errorf("failed to send health repsonse")
+			log.Errorf("failed to send health reposnse")
 		}
 	})
 

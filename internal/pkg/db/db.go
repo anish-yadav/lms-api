@@ -7,6 +7,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"os"
 	"time"
 )
 
@@ -16,13 +18,26 @@ var dbName = ""
 func Init(dbAddr string, db string) {
 	dbURI = dbAddr
 	dbName = db
+
+	// ping the db once
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	client := connect(ctx)
+	err := client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		log.Errorf("failed to ping database")
+		os.Exit(1)
+	}
+	if err = client.Disconnect(ctx); err != nil {
+		os.Exit(1)
+	}
 }
 
 func connect(ctx context.Context) *mongo.Client {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbURI))
 	if err != nil {
 		log.Errorf("db.connect: %s", err.Error())
-		panic(err)
+		os.Exit(1)
 	}
 	log.Debugf("db connection opened")
 	return client
@@ -52,8 +67,8 @@ func GetByID(collNamespace string, id string) bson.M {
 	return result
 }
 
-func InsertOne(dbNamespace string, collNamespace string, data bson.D) error {
-	log.Debugf("db.InsertOne: %s , %s", dbNamespace, collNamespace)
+func InsertOne(collNamespace string, data bson.D) error {
+	log.Debugf("db.InsertOne: %s , %s", dbName, collNamespace)
 	log.Debugf("db.InsertOne: %+v", data)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -67,7 +82,7 @@ func InsertOne(dbNamespace string, collNamespace string, data bson.D) error {
 		log.Debugf("db connection closed")
 	}()
 
-	collection := client.Database(dbNamespace).Collection(collNamespace)
+	collection := client.Database(dbName).Collection(collNamespace)
 
 	res, err := collection.InsertOne(ctx, data)
 
