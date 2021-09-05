@@ -17,12 +17,13 @@ const (
 
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
 		token := r.Header.Get(authHeaderKey)
 		tokenString := strings.TrimPrefix(token, bearer)
 		tokenString = strings.Trim(tokenString, " ")
 		log.Debugf("auth.Middleware: token : %s", tokenString)
 		if len(tokenString) == 0 {
-			webresponse.RespondWithError(w, http.StatusBadRequest, constants.InvalidToken)
+			webresponse.RespondWithError(w,  http.StatusBadRequest, constants.InvalidToken)
 			return
 		}
 		t, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -38,7 +39,7 @@ func Middleware(next http.Handler) http.Handler {
 		})
 		if err != nil {
 			log.Debugf("auth.Middleware: failed to parse/verify : %s", err.Error())
-			webresponse.RespondWithError(w, http.StatusUnauthorized, constants.InvalidToken)
+			webresponse.RespondWithError(w,  http.StatusUnauthorized, constants.InvalidToken)
 			return
 		}
 		claims := t.Claims.(jwt.MapClaims)
@@ -50,7 +51,7 @@ func Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		webresponse.RespondWithError(w, http.StatusUnauthorized, constants.InvalidToken)
+		webresponse.RespondWithError(w,  http.StatusUnauthorized, constants.InvalidToken)
 		return
 	})
 }

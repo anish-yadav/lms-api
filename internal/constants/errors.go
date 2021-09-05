@@ -7,4 +7,10 @@ const (
 	InvalidToken         = "invalid token"
 
 	StudentNotFound = "student data not present"
+
+	ItemNotFound = "item not found"
+
+	BadRequest       = "malformed request data"
+	Conflict         = "data already present"
+	PasswordMismatch = "email or password invalid"
 )

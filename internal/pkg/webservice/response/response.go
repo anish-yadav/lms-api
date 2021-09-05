@@ -13,7 +13,6 @@ type Response struct {
 
 func RespondWithError(w http.ResponseWriter, status int, message interface{}) {
 	w.WriteHeader(status)
-	w.Header().Add("Content-Type", "application/json")
 	response := &Response{
 		Error: message,
 		Data:  nil,
@@ -24,13 +23,11 @@ func RespondWithError(w http.ResponseWriter, status int, message interface{}) {
 	}
 }
 
-
 func RespondWithSuccess(w http.ResponseWriter, status int, data interface{}) {
 	w.WriteHeader(status)
-	w.Header().Set("Content-type", "application/json")
 	response := &Response{
 		Error: nil,
-		Data: data,
+		Data:  data,
 	}
 	bin, _ := json.Marshal(response)
 	if _, err := w.Write(bin); err != nil {

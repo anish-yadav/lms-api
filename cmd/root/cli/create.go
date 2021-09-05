@@ -1,14 +1,17 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"github.com/anish-yadav/lms-api/internal/pkg/user"
 	"github.com/anish-yadav/lms-api/internal/util"
-	"github.com/manifoldco/promptui"
 	"github.com/peterbourgon/ff/v3/ffcli"
+	log "github.com/sirupsen/logrus"
+	"os"
+	"strings"
 )
 
 func CreateAdminUser() *ffcli.Command {
@@ -43,6 +46,9 @@ func CreateAdminUser() *ffcli.Command {
 func createUser(typ string) error {
 	var email string
 	var pwd string
+	var name string
+
+	reader := bufio.NewReader(os.Stdin)
 
 	validatePwd := func(input string) error {
 		if len(input) < 6 {
@@ -56,35 +62,39 @@ func createUser(typ string) error {
 		}
 		return nil
 	}
-	emailPrompt := promptui.Prompt{
-		Label:    "Email",
-		Validate: util.ValidEmail,
-	}
-	email, err := emailPrompt.Run()
-	if err != nil {
-		return fmt.Errorf("invalid email address")
+	fmt.Print("Name: ")
+	name, _ = reader.ReadString('\n')
+	name = strings.Trim(name, "\n")
+	log.Debugf("name is %s", name)
+	fmt.Print("Email: ")
+	email, _ = reader.ReadString('\n')
+	email = strings.Trim(email, "\n")
+
+	log.Debugf("email is %s", email)
+	if err := util.ValidEmail(email); err != nil {
+		log.Debugf("%s", err.Error())
+		return errors.New("invalid email entered")
 	}
 
-	pwdPrompt := promptui.Prompt{
-		Label:    "Password",
-		Validate: validatePwd,
-		Mask:     '*',
-	}
-	pwd, err = pwdPrompt.Run()
-	if err != nil {
-		return fmt.Errorf("password must be 6 digit long")
+	fmt.Print("Password: ")
+	pwd, _ = reader.ReadString('\n')
+	pwd = strings.Trim(pwd, "\n")
+	if err := validatePwd(pwd); err != nil {
+		return errors.New("password must be 6 character long")
 	}
 
-	cnfPwdPrompt := promptui.Prompt{
-		Label:    "Confirm Password",
-		Validate: confirmPwd,
-		Mask:     '*',
-	}
-	pwd, err = cnfPwdPrompt.Run()
-	if err != nil {
-		return fmt.Errorf("password must be 6 digit long")
+	fmt.Print("Confirm Password: ")
+	cnfPwd, _ := reader.ReadString('\n')
+	cnfPwd = strings.Trim(cnfPwd, "\n")
+	if err := confirmPwd(cnfPwd); err != nil {
+		return errors.New("password mismatch")
 	}
 
-	usr := user.NewUser(email, pwd, typ)
-	return usr.AddToDB()
+	usr := user.NewUser(name, email, pwd, typ)
+	id, err := usr.AddToDB()
+	if err != nil {
+		return err
+	}
+	log.Infof("Id of user is %s", id)
+	return nil
 }

@@ -14,7 +14,7 @@ func StartServer(port string) {
 		Handler: r,
 	}
 
-	log.Debugf("webservice.StartServer: server starting at port %s", port)
+	log.Infof("webservice.StartServer: server starting at port %s", port)
 	if err := server.ListenAndServe(); err != nil {
 		log.Debugf("webservice.StartServer: %s", err.Error())
 	}

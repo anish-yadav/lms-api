@@ -15,7 +15,7 @@ func NewHttpManager() *httpManager {
 }
 
 func (s *httpManager) GetStudentByID(id string) (bson.M, error) {
-	data := db.GetByID("student", id)
+	data, _ := db.GetByID("student", id)
 	if data == nil {
 		return nil, errors.New(constants.StudentNotFound)
 	}

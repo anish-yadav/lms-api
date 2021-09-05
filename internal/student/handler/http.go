@@ -45,6 +45,4 @@ func (s *studentHttpHandler) HandleGetStudent(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-
-
 }

@@ -3,36 +3,40 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/anish-yadav/lms-api/cmd/root/cli"
 	"github.com/anish-yadav/lms-api/internal/pkg/db"
+	"github.com/anish-yadav/lms-api/internal/util"
 	"github.com/peterbourgon/ff/v3/ffcli"
+	log "github.com/sirupsen/logrus"
 	"os"
 )
 
 var (
-	dbURI  = flag.String("dbAddr", "mongodb://localhost:27017", "url of mongodb database")
-	dbName = flag.String("db", "lms", "database name")
+	dbURI    = flag.String("dbAddr", "mongodb://localhost:27017", "url of mongodb database")
+	dbName   = flag.String("db", "lms", "database name")
+	logLevel = flag.String("log", "debug", "log level")
 )
 
 func main() {
 	flag.Parse()
 	db.Init(*dbURI, *dbName)
+	db.CreateIndexes("users")
+	util.InitLogger(*logLevel)
 
 	var (
 		rootFlagSet = flag.NewFlagSet("lms", flag.ExitOnError)
 	)
 
 	root := &ffcli.Command{
-		ShortUsage:  "lms [flags] <subcommand>",
-		FlagSet:     rootFlagSet,
+		ShortUsage: "lms [flags] <subcommand>",
+		FlagSet:    rootFlagSet,
 		Subcommands: []*ffcli.Command{
 			cli.CreateAdminUser(),
 		},
 	}
 
 	if err := root.ParseAndRun(context.Background(), os.Args[1:]); err != nil {
-		fmt.Printf("%s",err)
+		log.Error(err)
 		return
 	}
 }
