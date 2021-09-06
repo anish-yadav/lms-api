@@ -6,6 +6,9 @@ import (
 	webresponse "github.com/anish-yadav/lms-api/internal/pkg/webservice/response"
 	"github.com/anish-yadav/lms-api/internal/user/usecase"
 	"github.com/go-playground/validator/v10"
+	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"io/ioutil"
 	"net/http"
@@ -83,4 +86,25 @@ func (u *userHttpHandler) HandleChangePassword(w http.ResponseWriter, r *http.Re
 	response := UserRequestResponse{userRequest.ID}
 	webresponse.RespondWithSuccess(w, http.StatusCreated, response)
 	return
+}
+
+func (u *userHttpHandler) HandleUserDelete(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	log.Debugf("deleteing user: %s", id)
+
+	if !primitive.IsValidObjectID(id) {
+		webresponse.RespondWithError(w, http.StatusBadRequest, constants.ItemNotFound)
+		return
+	}
+
+	err := u.manager.DeleteUser(id)
+	if err != nil {
+		webresponse.RespondWithError(w, http.StatusBadGateway, constants.IntervalServerError)
+		return
+	}
+
+	webresponse.RespondWithSuccess(w, http.StatusOK, []byte("success"))
+	return
+
 }

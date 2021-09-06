@@ -43,6 +43,10 @@ func GetUserById(id string) *User {
 	return &user
 }
 
+func DeleteUserByID(id string) error {
+	return db.DelByID(collection, id)
+}
+
 func (user *User) AddToDB() (string, error) {
 	bin, err := bson.Marshal(user)
 	if err != nil {

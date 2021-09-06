@@ -35,6 +35,10 @@ func (m *httpManager) ResetPassword(id string, old string, new string) error {
 	return currUser.ResetPassword(old, new)
 }
 
+func (m *httpManager) DeleteUser(id string) error {
+	return user.DeleteUserByID(id)
+}
+
 func randStringRunes(n int) string {
 	b := make([]rune, n)
 	for i := range b {

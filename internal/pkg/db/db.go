@@ -173,3 +173,28 @@ func UpdateItem(collNamespace string, id string, update bson.D) error {
 	}
 	return nil
 }
+
+func DelByID(collNamespace string, id string) error {
+	log.Debugf("db.DelByID: %s , %s, %s", dbName, id)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client := connect(ctx)
+
+	defer func() {
+		if err := client.Disconnect(ctx); err != nil {
+			log.Errorf("failed to close db connection")
+			panic(err)
+		}
+		log.Debugf("db connection closed")
+	}()
+
+	collection := client.Database(dbName).Collection(collNamespace)
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	res, err := collection.DeleteOne(ctx, bson.D{{"_id", objectId}})
+	if err != nil {
+		log.Errorf("db.DelByID: %s", err.Error())
+		return err
+	}
+	log.Debugf("db.DelByID: deleted entities: %s", res.DeletedCount)
+	return nil
+}
