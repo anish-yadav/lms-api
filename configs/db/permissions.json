@@ -1,0 +1,13 @@
+{
+  "admin": [
+    "lms.user.create",
+    "lms.user.delete",
+    "lms.user.edit"
+  ],
+  "student": [
+    "lms.user.edit"
+  ],
+  "teacher": [
+    "lms.user.edit"
+  ]
+}

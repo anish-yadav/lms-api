@@ -13,4 +13,5 @@ const (
 	BadRequest       = "malformed request data"
 	Conflict         = "data already present"
 	PasswordMismatch = "email or password invalid"
+	Forbidden        = "user is not authorized to access this resource "
 )

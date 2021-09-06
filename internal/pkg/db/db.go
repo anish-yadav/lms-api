@@ -7,6 +7,7 @@ import (
 	"github.com/anish-yadav/lms-api/internal/constants"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -79,10 +80,33 @@ func GetByID(collNamespace string, id string) (bson.M, error) {
 
 	collection := client.Database(dbName).Collection(collNamespace)
 	var result bson.M
-	id = fmt.Sprintf("ObjectID(\"id\")")
-	err := collection.FindOne(ctx, bson.D{{"_id", id}}).Decode(&result)
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	err := collection.FindOne(ctx, bson.D{{"_id", objectId}}).Decode(&result)
 	if err != nil {
 		log.Errorf("db.GetByID: %s", err.Error())
+		return bson.M{}, err
+	}
+	return result, nil
+}
+func GetByPKey(collNamespace string, pkey string, value string) (bson.M, error) {
+	log.Debugf("db.GeByID: %s , %s, %s", dbName, collNamespace, value)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client := connect(ctx)
+
+	defer func() {
+		if err := client.Disconnect(ctx); err != nil {
+			log.Errorf("failed to close db connection")
+			panic(err)
+		}
+		log.Debugf("db connection closed")
+	}()
+
+	collection := client.Database(dbName).Collection(collNamespace)
+	var result bson.M
+	err := collection.FindOne(ctx, bson.D{{pkey, value}}).Decode(&result)
+	if err != nil {
+		log.Errorf("db.GetByPkey: %s", err.Error())
 		return bson.M{}, err
 	}
 	return result, nil

@@ -32,6 +32,7 @@ func main() {
 		FlagSet:    rootFlagSet,
 		Subcommands: []*ffcli.Command{
 			cli.CreateAdminUser(),
+			cli.LoadPermissions(),
 		},
 	}
 

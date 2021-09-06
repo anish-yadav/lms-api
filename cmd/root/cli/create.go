@@ -22,7 +22,7 @@ func CreateAdminUser() *ffcli.Command {
 
 	return &ffcli.Command{
 		Name:       "create-user",
-		ShortUsage: "cosign create-user create a user for given type",
+		ShortUsage: "lms create-user create a user for given type",
 		ShortHelp:  "Create and add a user to database",
 		LongHelp: `
 		Create a user of type "admin" :
