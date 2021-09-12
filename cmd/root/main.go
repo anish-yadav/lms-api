@@ -33,6 +33,7 @@ func main() {
 		Subcommands: []*ffcli.Command{
 			cli.CreateAdminUser(),
 			cli.LoadPermissions(),
+			cli.ChangePassword(),
 		},
 	}
 

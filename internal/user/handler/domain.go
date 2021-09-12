@@ -2,13 +2,6 @@ package handler
 
 import "github.com/anish-yadav/lms-api/internal/pkg/user"
 
-type StudentResponse struct {
-	ID             string `json:"id"`
-	Name           string `json:"name"`
-	Email          string `json:"email"`
-	RegistrationNo string `json:"registration_no"`
-	Role           string `json:"string"`
-}
 
 type UserRequest struct {
 	Name  string `json:"name" validate:"required"`
@@ -20,11 +13,27 @@ type UserRequestResponse struct {
 	ID string `json:"id"`
 }
 
-type ResetPasswordRequest struct {
+type ChangePasswordRequest struct {
 	ID          string `json:"id" validate:"required"`
 	OldPassword string `json:"old" validate:"required"`
 	NewPassword string `json:"new" validate:"required"`
 }
+
+type ReqResetPasswordRequest struct {
+	Email string `json:"email" validate:"required"`
+}
+
+type ResetPasswordRequest struct {
+	NewPassword string `json:"newPassword" validate:"required"`
+}
+
+type LoginRequest struct {
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+
+
 
 func (u *UserRequest) toUser() user.User {
 	return user.User{

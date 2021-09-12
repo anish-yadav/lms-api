@@ -1,0 +1,1 @@
+export LMS_JWT_SECRET=somerandomstring

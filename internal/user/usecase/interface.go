@@ -1,9 +1,15 @@
 package usecase
 
-import "github.com/anish-yadav/lms-api/internal/pkg/user"
+import (
+	"context"
+	"github.com/anish-yadav/lms-api/internal/pkg/user"
+)
 
 type HttpManager interface {
 	CreateUser(user user.User) (string, error)
-	ResetPassword(id string, old string, pwd string) error
+	ChangePassword(ctx context.Context, old string, pwd string) error
 	DeleteUser(id string) error
+	ResetPassword(ctx context.Context, new string) error
+	RequestPasswordReset(email string) error
+	Login(username string, password string) (string, error)
 }

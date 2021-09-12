@@ -6,6 +6,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
 	github.com/google/go-cmp v0.5.5 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/kamva/mgm/v3 v3.3.1 // indirect
 	github.com/manifoldco/promptui v0.8.0

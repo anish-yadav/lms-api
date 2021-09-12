@@ -12,6 +12,7 @@ type Response struct {
 }
 
 func RespondWithError(w http.ResponseWriter, status int, message interface{}) {
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 	response := &Response{
 		Error: message,
@@ -24,6 +25,7 @@ func RespondWithError(w http.ResponseWriter, status int, message interface{}) {
 }
 
 func RespondWithSuccess(w http.ResponseWriter, status int, data interface{}) {
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 	response := &Response{
 		Error: nil,

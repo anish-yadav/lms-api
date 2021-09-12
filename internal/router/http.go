@@ -2,8 +2,6 @@ package router
 
 import (
 	"github.com/anish-yadav/lms-api/internal/auth"
-	studentHandler "github.com/anish-yadav/lms-api/internal/student/handler"
-	studentManager "github.com/anish-yadav/lms-api/internal/student/manager"
 	userHttpHandler "github.com/anish-yadav/lms-api/internal/user/handler"
 	userUsecase "github.com/anish-yadav/lms-api/internal/user/usecase"
 	"github.com/gorilla/mux"
@@ -13,15 +11,24 @@ import (
 
 func NewRouter() *mux.Router {
 	router := mux.NewRouter()
-	studentHttpManager := studentManager.NewHttpManager()
-	studentHttpHandler := studentHandler.NewHttpHandler(studentHttpManager)
 
 	userManager := userUsecase.NewHttpManager()
 	userHandler := userHttpHandler.NewHttpHandler(userManager)
 	// routes
 	v1 := router.PathPrefix("/api/v1").Subrouter()
+	publicPost := v1.Methods(http.MethodPost).Subrouter()
+
+	publicPost.HandleFunc("/users/request-password-reset", userHandler.HandleRequestReset)
+	publicPost.HandleFunc("/users/login", userHandler.HandleLoginRequest)
+
+	//with user authenticated routes
+	post := v1.Methods(http.MethodPost).Subrouter()
+	post.Use(auth.VerifyResetMiddleware)
+	post.HandleFunc("/users/reset-password", userHandler.HandleResetPassword)
+
 	// jwt
-	v1.Use(auth.Middleware)
+	v1 = v1.PathPrefix("/").Subrouter()
+	v1.Use(auth.PermissionMiddleware)
 	gets := v1.Methods(http.MethodGet).Subrouter()
 	posts := v1.Methods(http.MethodPost).Subrouter()
 	del := v1.Methods(http.MethodDelete).Subrouter()
@@ -32,11 +39,8 @@ func NewRouter() *mux.Router {
 		}
 	})
 
-	gets.HandleFunc("/students/{id}", studentHttpHandler.HandleGetStudent)
-
 	posts.HandleFunc("/users", userHandler.HandlePostStudent)
-	posts.HandleFunc("/users/password-reset", userHandler.HandleChangePassword)
-
+	posts.HandleFunc("/users/change-password", userHandler.HandleChangePassword)
 	del.HandleFunc("/users/{id}", userHandler.HandleUserDelete)
 	return router
 }

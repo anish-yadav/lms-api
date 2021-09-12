@@ -89,7 +89,7 @@ func GetByID(collNamespace string, id string) (bson.M, error) {
 	return result, nil
 }
 func GetByPKey(collNamespace string, pkey string, value string) (bson.M, error) {
-	log.Debugf("db.GeByID: %s , %s, %s", dbName, collNamespace, value)
+	log.Debugf("db.GeByPKey: %s , %s, %s", dbName, collNamespace, value)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client := connect(ctx)
@@ -160,15 +160,17 @@ func UpdateItem(collNamespace string, id string, update bson.D) error {
 	}()
 
 	collection := client.Database(dbName).Collection(collNamespace)
-	//var result bson.M
-	// do not creat new user if not present
 	opts := options.Update().SetUpsert(false)
-	result, err := collection.UpdateByID(ctx, id, update, opts)
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	result, err := collection.UpdateByID(ctx, objID, update, opts)
 	if err != nil {
 		log.Errorf("db.GetByID: %s", err.Error())
 		return err
 	}
-	if result.MatchedCount != 0 {
+	if result.MatchedCount == 0 {
 		return errors.New(constants.ItemNotFound)
 	}
 	return nil

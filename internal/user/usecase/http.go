@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"github.com/anish-yadav/lms-api/internal/constants"
 	"github.com/anish-yadav/lms-api/internal/pkg/user"
@@ -24,17 +25,57 @@ func (m *httpManager) CreateUser(u user.User) (string, error) {
 	log.Debugf("email: %s, password: %s", u.Email, password)
 	newUser := user.NewUser(u.Name, u.Email, password, u.Type)
 	// TODO need to send mail to user to reset its password
-	return newUser.AddToDB()
+	id, err := newUser.AddToDB()
+	if err != nil {
+		return "", err
+	}
+	req := user.NewPasswordResetRequest(newUser)
+	token, err := req.SendRequest()
+	if err != nil {
+		return "", err
+	}
+	log.Debugf("CreateUser: reset password req token : %s", token)
+	return id, err
 }
 
-func (m *httpManager) ResetPassword(id string, old string, new string) error {
-	currUser := user.GetUserById(id)
+func (m *httpManager) RequestPasswordReset(email string) error {
+	currUser := user.GetUserByEmail(email)
 	if currUser == nil {
 		return errors.New(constants.ItemNotFound)
 	}
-	return currUser.ResetPassword(old, new)
+	req := user.NewPasswordResetRequest(currUser)
+	token, err := req.SendRequest()
+	if err != nil {
+		return err
+	}
+	log.Debugf("reqPassReset: reset password req token : %s", token)
+	return nil
 }
 
+func (m *httpManager) ChangePassword(ctx context.Context, old string, new string) error {
+	currUser := ctx.Value("user").(*user.User)
+	return currUser.ChangePassword(old, new)
+}
+
+func (m *httpManager) ResetPassword(ctx context.Context, new string) error {
+	currUser := ctx.Value("user").(*user.User)
+	err := currUser.ResetPassword(new)
+	if err != nil {
+		return err
+	}
+	resetReq := ctx.Value("request").(*user.ResetRequest)
+	return resetReq.Close()
+}
+
+func (m *httpManager) Login(username string, pass string) (string, error) {
+	currUser := user.GetUserByEmail(username)
+	if currUser == nil {
+		return "", errors.New(constants.ItemNotFound)
+	}
+	return currUser.Login(pass)
+}
+
+// TODO: change to context
 func (m *httpManager) DeleteUser(id string) error {
 	return user.DeleteUserByID(id)
 }

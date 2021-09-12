@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"net/http"
 )
@@ -62,7 +63,7 @@ func (u *userHttpHandler) HandleChangePassword(w http.ResponseWriter, r *http.Re
 		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
 		return
 	}
-	var userRequest ResetPasswordRequest
+	var userRequest ChangePasswordRequest
 	err = json.Unmarshal(data, &userRequest)
 	if err != nil {
 		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
@@ -74,7 +75,7 @@ func (u *userHttpHandler) HandleChangePassword(w http.ResponseWriter, r *http.Re
 		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
 		return
 	}
-	err = u.manager.ResetPassword(userRequest.ID, userRequest.OldPassword, userRequest.NewPassword)
+	err = u.manager.ChangePassword(r.Context(), userRequest.OldPassword, userRequest.NewPassword)
 	if err != nil {
 		if err.Error() == constants.ItemNotFound {
 			webresponse.RespondWithError(w, http.StatusNotFound, constants.ItemNotFound)
@@ -107,4 +108,108 @@ func (u *userHttpHandler) HandleUserDelete(w http.ResponseWriter, r *http.Reques
 	webresponse.RespondWithSuccess(w, http.StatusOK, []byte("success"))
 	return
 
+}
+
+func (u *userHttpHandler) HandleRequestReset(w http.ResponseWriter, r *http.Request) {
+
+	defer r.Body.Close()
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
+		return
+	}
+	var req ReqResetPasswordRequest
+	err = json.Unmarshal(data, &req)
+	if err != nil {
+		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
+		return
+	}
+	validate := validator.New()
+	err = validate.Struct(req)
+	if err != nil {
+		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
+		return
+	}
+	err = u.manager.RequestPasswordReset(req.Email)
+	if err != nil {
+		if err.Error() == constants.ItemNotFound {
+			webresponse.RespondWithError(w, http.StatusNotFound, constants.ItemNotFound)
+			return
+		}
+		log.Debugf("HandleRequestReset: %s", err.Error())
+		webresponse.RespondWithError(w, http.StatusInternalServerError, constants.IntervalServerError)
+		return
+	}
+	webresponse.RespondWithSuccess(w, http.StatusOK, "")
+	return
+}
+
+func (u *userHttpHandler) HandleResetPassword(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
+		return
+	}
+	var userRequest ResetPasswordRequest
+	err = json.Unmarshal(data, &userRequest)
+	if err != nil {
+		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
+		return
+	}
+	validate := validator.New()
+	err = validate.Struct(userRequest)
+	if err != nil {
+		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
+		return
+	}
+	err = u.manager.ResetPassword(r.Context(), userRequest.NewPassword)
+	if err != nil {
+		if err.Error() == constants.ItemNotFound {
+			webresponse.RespondWithError(w, http.StatusNotFound, constants.ItemNotFound)
+			return
+		}
+		webresponse.RespondWithError(w, http.StatusInternalServerError, constants.IntervalServerError)
+		return
+	}
+	webresponse.RespondWithSuccess(w, http.StatusOK, "")
+	return
+}
+
+func (u *userHttpHandler) HandleLoginRequest(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
+		return
+	}
+	var loginReq LoginRequest
+	err = json.Unmarshal(data, &loginReq)
+	if err != nil {
+		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
+		return
+	}
+	validate := validator.New()
+	err = validate.Struct(loginReq)
+	if err != nil {
+		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
+		return
+	}
+	token, err := u.manager.Login(loginReq.Username, loginReq.Password)
+	if err != nil {
+		if err.Error() == constants.ItemNotFound {
+			webresponse.RespondWithError(w, http.StatusNotFound, constants.ItemNotFound)
+			return
+		} else if err == bcrypt.ErrMismatchedHashAndPassword {
+			webresponse.RespondWithError(w, http.StatusUnauthorized, constants.PasswordMismatch)
+			return
+		}
+		webresponse.RespondWithError(w, http.StatusInternalServerError, constants.IntervalServerError)
+		return
+	}
+	response := LoginResponse{
+		Token: token,
+	}
+	webresponse.RespondWithSuccess(w, http.StatusOK, response)
+	return
 }
