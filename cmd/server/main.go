@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	dbURI  = flag.String("dbAddr", "mongodb://localhost:27017", "url of mongodb database")
+	dbURI  = flag.String("dbAddr", "mongodb+srv://admin:admin@lms-cluster.mnoel.mongodb.net/test", "url of mongodb database")
 	dbName = flag.String("db", "lms", "database name")
 	port   = flag.String("port", "8080", "port of the server")
 	log    = flag.String("log", "debug", "log level")
