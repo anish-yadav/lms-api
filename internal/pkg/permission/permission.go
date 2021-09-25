@@ -48,6 +48,9 @@ func (p *Permission) AddToDB() (string, error) {
 }
 
 func (p *Permission) HasPermission(permission string) bool {
+	if len(permission) == 0 {
+		return true
+	}
 	for _, p := range p.Permissions {
 		if permission == p {
 			return true

@@ -11,5 +11,6 @@ type HttpManager interface {
 	DeleteUser(id string) error
 	ResetPassword(ctx context.Context, new string) error
 	RequestPasswordReset(email string) error
-	Login(username string, password string) (string, error)
+	Login(username string, password string) (*user.UserDb, string, error)
+	GetMe(ctx context.Context) (*user.UserDb, string, error)
 }

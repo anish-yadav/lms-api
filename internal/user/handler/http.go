@@ -180,27 +180,29 @@ func (u *userHttpHandler) HandleLoginRequest(w http.ResponseWriter, r *http.Requ
 	defer r.Body.Close()
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Debugf("malformed data %s", err.Error())
 		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
 		return
 	}
 	var loginReq LoginRequest
 	err = json.Unmarshal(data, &loginReq)
 	if err != nil {
+		log.Debugf("%s", data)
+		log.Debugf("malformed data : %s ", err.Error())
 		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
 		return
 	}
 	validate := validator.New()
 	err = validate.Struct(loginReq)
 	if err != nil {
+		log.Debugf("malformed data : %s ", err.Error())
 		webresponse.RespondWithError(w, http.StatusBadRequest, constants.BadRequest)
 		return
 	}
-	token, err := u.manager.Login(loginReq.Username, loginReq.Password)
+	user, token, err := u.manager.Login(loginReq.Username, loginReq.Password)
 	if err != nil {
-		if err.Error() == constants.ItemNotFound {
-			webresponse.RespondWithError(w, http.StatusNotFound, constants.ItemNotFound)
-			return
-		} else if err == bcrypt.ErrMismatchedHashAndPassword {
+		log.Debugf("loginUser: %s", err.Error())
+		if err.Error() == constants.ItemNotFound || err == bcrypt.ErrMismatchedHashAndPassword {
 			webresponse.RespondWithError(w, http.StatusUnauthorized, constants.PasswordMismatch)
 			return
 		}
@@ -209,6 +211,23 @@ func (u *userHttpHandler) HandleLoginRequest(w http.ResponseWriter, r *http.Requ
 	}
 	response := LoginResponse{
 		Token: token,
+		User:  user.ToResponse(),
+	}
+	webresponse.RespondWithSuccess(w, http.StatusOK, response)
+	return
+}
+
+func (u *userHttpHandler) HandleGetMeRequest(w http.ResponseWriter, r *http.Request) {
+
+	user, token, err := u.manager.GetMe(r.Context())
+	if err != nil {
+		webresponse.RespondWithError(w, http.StatusInternalServerError, constants.IntervalServerError)
+		return
+	}
+	
+	response := LoginResponse{
+		Token: token,
+		User:  user.ToResponse(),
 	}
 	webresponse.RespondWithSuccess(w, http.StatusOK, response)
 	return

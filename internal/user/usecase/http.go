@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/anish-yadav/lms-api/internal/constants"
 	"github.com/anish-yadav/lms-api/internal/pkg/user"
+	"github.com/anish-yadav/lms-api/internal/util"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"time"
@@ -53,12 +54,12 @@ func (m *httpManager) RequestPasswordReset(email string) error {
 }
 
 func (m *httpManager) ChangePassword(ctx context.Context, old string, new string) error {
-	currUser := ctx.Value("user").(*user.User)
+	currUser := ctx.Value("user").(*user.UserDb)
 	return currUser.ChangePassword(old, new)
 }
 
 func (m *httpManager) ResetPassword(ctx context.Context, new string) error {
-	currUser := ctx.Value("user").(*user.User)
+	currUser := ctx.Value("user").(*user.UserDb)
 	err := currUser.ResetPassword(new)
 	if err != nil {
 		return err
@@ -67,12 +68,28 @@ func (m *httpManager) ResetPassword(ctx context.Context, new string) error {
 	return resetReq.Close()
 }
 
-func (m *httpManager) Login(username string, pass string) (string, error) {
+func (m *httpManager) Login(username string, pass string) (*user.UserDb, string, error) {
 	currUser := user.GetUserByEmail(username)
 	if currUser == nil {
-		return "", errors.New(constants.ItemNotFound)
+		return nil, "", errors.New(constants.ItemNotFound)
 	}
-	return currUser.Login(pass)
+	token, err := currUser.Login(pass)
+	if err != nil {
+		return nil, "", err
+	}
+	return currUser, token, nil
+}
+
+func (m *httpManager) GetMe(ctx context.Context) (*user.UserDb, string, error) {
+	currUser := ctx.Value("user").(*user.UserDb)
+	data := map[string]string{
+		"user_id": currUser.ID.Hex(),
+	}
+	token ,err := util.CreateToken(data)
+	if err != nil {
+		return nil, "", err
+	}
+	return currUser, token, nil
 }
 
 // TODO: change to context

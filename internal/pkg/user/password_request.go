@@ -21,7 +21,7 @@ type ResetRequest struct {
 
 const resetTokenCollection = "reset-requests"
 
-func NewPasswordResetRequest(user *User) *ResetRequest {
+func NewPasswordResetRequest(user *UserDb) *ResetRequest {
 	expirationTime := time.Now().Add(time.Hour * 24 * 31)
 	return &ResetRequest{
 		ExpirationDate: expirationTime,

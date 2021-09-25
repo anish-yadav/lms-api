@@ -7,4 +7,5 @@ var RoutePermissionMap = map[string]string{
 	"/users/reset-password":         "lms.user.edit",
 	"/users/request-password-reset": "lms.user.edit",
 	"/users/{id}":                   "lms.user.delete",
+	"/users/me":                     "",
 }

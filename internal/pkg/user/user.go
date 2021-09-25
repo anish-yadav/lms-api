@@ -11,7 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct {
+type UserDb struct {
 	ID       primitive.ObjectID `json:"id" bson:"_id"`
 	Name     string             `json:"name"`
 	Email    string             `json:"email"`
@@ -20,15 +20,26 @@ type User struct {
 	Detail   interface{}        `json:"details"`
 }
 
-const collection = "users"
-
-func NewUser(name string, email string, password string, typ string) *User {
-	hashedPwd, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	id := primitive.NewObjectID()
-	return &User{id, name, email, string(hashedPwd), typ, nil}
+type User struct {
+	ID    primitive.ObjectID `json:"id" bson:"_id"`
+	Name  string             `json:"name"`
+	Email string             `json:"email"`
+	Type  string             `json:"type"`
 }
 
-func GetUserById(id string) *User {
+func (user *UserDb) ToResponse() *User {
+	return &User{user.ID, user.Name, user.Email, user.Type}
+}
+
+const collection = "users"
+
+func NewUser(name string, email string, password string, typ string) *UserDb {
+	hashedPwd, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	id := primitive.NewObjectID()
+	return &UserDb{id, name, email, string(hashedPwd), typ, nil}
+}
+
+func GetUserById(id string) *UserDb {
 	userDb, err := db.GetByID(collection, id)
 	if err != nil {
 		return nil
@@ -38,7 +49,7 @@ func GetUserById(id string) *User {
 		log.Debugf("user.NewUserById: marshal bson : %s", err.Error())
 		return nil
 	}
-	var user User
+	var user UserDb
 	if err = bson.Unmarshal(bsonBytes, &user); err != nil {
 		log.Debugf("user.NewUserById: unmarshal to user: %s", err.Error())
 		return nil
@@ -46,7 +57,7 @@ func GetUserById(id string) *User {
 	return &user
 }
 
-func GetUserByEmail(email string) *User {
+func GetUserByEmail(email string) *UserDb {
 	userDb, err := db.GetByPKey(collection, "email", email)
 	if err != nil {
 		return nil
@@ -56,7 +67,7 @@ func GetUserByEmail(email string) *User {
 		log.Debugf("user.NewUserById: marshal bson : %s", err.Error())
 		return nil
 	}
-	var user User
+	var user UserDb
 	if err = bson.Unmarshal(bsonBytes, &user); err != nil {
 		log.Debugf("user.NewUserById: unmarshal to user: %s", err.Error())
 		return nil
@@ -68,7 +79,7 @@ func DeleteUserByID(id string) error {
 	return db.DelByID(collection, id)
 }
 
-func (user *User) AddToDB() (string, error) {
+func (user *UserDb) AddToDB() (string, error) {
 	bin, err := bson.Marshal(user)
 	if err != nil {
 		return "", errors.New("failed to marshal user data")
@@ -78,7 +89,7 @@ func (user *User) AddToDB() (string, error) {
 	return db.InsertOne(collection, bsonData)
 }
 
-func (user *User) ChangePassword(old string, new string) error {
+func (user *UserDb) ChangePassword(old string, new string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(old))
 	if err != nil {
 		return errors.New(constants.PasswordMismatch)
@@ -86,14 +97,14 @@ func (user *User) ChangePassword(old string, new string) error {
 	return user.ResetPassword(new)
 }
 
-func (user *User) ResetPassword(new string) error {
+func (user *UserDb) ResetPassword(new string) error {
 	newHashedPwd, _ := bcrypt.GenerateFromPassword([]byte(new), bcrypt.DefaultCost)
 	user.Password = string(newHashedPwd)
 	resetQuery := bson.D{{"$set", bson.D{{"password", user.Password}}}}
 	return db.UpdateItem(collection, user.ID.Hex(), resetQuery)
 }
 
-func (user *User) Login(pass string) (string, error) {
+func (user *UserDb) Login(pass string) (string, error) {
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pass))
 	if err != nil {
 		return "", err

@@ -55,6 +55,7 @@ func PermissionMiddleware(next http.Handler) http.Handler {
 		log.Debugf("permission required for %s : %s", r.URL.Path, reqPermission)
 		userID := data["user_id"]
 		if userID == nil {
+			log.Debugf("invalid token, userID: %s", userID)
 			webresponse.RespondWithError(w, http.StatusForbidden, constants.Forbidden)
 			return
 		}
@@ -62,6 +63,7 @@ func PermissionMiddleware(next http.Handler) http.Handler {
 		userPermission := permission.GetPermissionByName(currUser.Type)
 
 		if !userPermission.HasPermission(reqPermission) {
+			log.Debugf("user is not authorized")
 			webresponse.RespondWithError(w, http.StatusForbidden, constants.Forbidden)
 			return
 		}

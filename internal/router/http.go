@@ -39,6 +39,8 @@ func NewRouter() *mux.Router {
 		}
 	})
 
+	gets.HandleFunc("/users/me", userHandler.HandleGetMeRequest)
+
 	posts.HandleFunc("/users", userHandler.HandlePostStudent)
 	posts.HandleFunc("/users/change-password", userHandler.HandleChangePassword)
 	del.HandleFunc("/users/{id}", userHandler.HandleUserDelete)

@@ -4,18 +4,13 @@ go 1.16
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/go-playground/validator/v10 v10.9.0 // indirect
-	github.com/google/go-cmp v0.5.5 // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/go-playground/validator/v10 v10.9.0
+	github.com/google/uuid v1.3.0
+	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
-	github.com/kamva/mgm/v3 v3.3.1 // indirect
-	github.com/manifoldco/promptui v0.8.0
 	github.com/peterbourgon/ff/v3 v3.1.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.0 // indirect
 	go.mongodb.org/mongo-driver v1.7.1
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	google.golang.org/api v0.56.0
 )
