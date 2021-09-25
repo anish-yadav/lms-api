@@ -25,6 +25,10 @@ func init() {
 		fmt.Println(jwtSecret)
 		os.Setenv(constants.JwtSecret, jwtSecret)
 	}
+	osPort := os.Getenv("PORT")
+	if len(osPort) != 0 {
+		*port = osPort
+	}
 }
 
 func main() {
