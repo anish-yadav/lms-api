@@ -82,7 +82,7 @@ func (r *ResetRequest) SendRequest() (string, error) {
 	}
 
 	// todo send a mail with token
-	tmpl := template.Must(template.ParseFiles("templates/password-reset.html"))
+	tmpl := template.Must(template.ParseFiles("templates/reset-password.html"))
 	buff := new(bytes.Buffer)
 	templData := &ResetTemplateParam{
 		ResetLink: "http://localhost:3000/reset?token=" + token,
