@@ -21,3 +21,4 @@
 # vendor/
 
 bin
+env.local.secret.sh

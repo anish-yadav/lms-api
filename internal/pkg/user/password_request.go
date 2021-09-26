@@ -1,13 +1,20 @@
 package user
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"github.com/anish-yadav/lms-api/internal/constants"
 	"github.com/anish-yadav/lms-api/internal/pkg/db"
 	"github.com/anish-yadav/lms-api/internal/util"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"html/template"
+	"io/ioutil"
+	"net/http"
+	"os"
 	"time"
 )
 
@@ -17,6 +24,10 @@ type ResetRequest struct {
 	ExpirationDate time.Time          `json:"expirationDate"`
 	Used           bool               `json:"used"`
 	Username       string             `json:"username"`
+}
+
+type ResetTemplateParam struct {
+	ResetLink string
 }
 
 const resetTokenCollection = "reset-requests"
@@ -69,6 +80,19 @@ func (r *ResetRequest) SendRequest() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	// todo send a mail with token
+	tmpl := template.Must(template.ParseFiles("templates/password-reset.html"))
+	buff := new(bytes.Buffer)
+	templData := &ResetTemplateParam{
+		ResetLink: "http://localhost:3000/reset?token=" + token,
+	}
+
+	if err = tmpl.Execute(buff, templData); err != nil {
+		return "", err
+	}
+	body := buff.String()
+	r.sendResetEmail(body)
 	return token, nil
 }
 
@@ -86,4 +110,46 @@ func (r *ResetRequest) IsValid() bool {
 		return false
 	}
 	return true
+}
+
+func (r *ResetRequest) sendResetEmail(body string) {
+	resetReq := struct {
+		To      string `json:"to"`
+		Message string `json:"message"`
+		Subject string `json:"subject"`
+	}{
+		To:      r.Username,
+		Message: body,
+		Subject: "You request to reset password",
+	}
+	b, err := json.Marshal(resetReq)
+	bodyReader := bytes.NewReader(b)
+	client := &http.Client{}
+	// TODO: change it to env maybe
+	url := os.Getenv(constants.MessageServerPath) + "/send-email"
+	req, err := http.NewRequest(http.MethodPost, url, bodyReader)
+	if err != nil {
+		log.Errorf("sendResetEmail: %s", err.Error())
+		return
+	}
+
+	// add your api key
+	req.Header.Set("x-api-key", os.Getenv(constants.MessageServerKey))
+
+	// make request
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("sendResetEmail: failed to send request: %s", err.Error())
+		return
+	}
+
+	defer resp.Body.Close()
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("sendResetEmail: %s", err.Error())
+		return
+	}
+	log.Debugf("sendResetEmail: status: %d, body:  %s", resp.StatusCode, respBody)
+	return
+
 }
