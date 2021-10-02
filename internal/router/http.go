@@ -2,6 +2,8 @@ package router
 
 import (
 	"github.com/anish-yadav/lms-api/internal/auth"
+	classHttpHandler "github.com/anish-yadav/lms-api/internal/class/handler"
+	classUsecase "github.com/anish-yadav/lms-api/internal/class/usecase"
 	userHttpHandler "github.com/anish-yadav/lms-api/internal/user/handler"
 	userUsecase "github.com/anish-yadav/lms-api/internal/user/usecase"
 	"github.com/gorilla/mux"
@@ -14,6 +16,10 @@ func NewRouter() *mux.Router {
 
 	userManager := userUsecase.NewHttpManager()
 	userHandler := userHttpHandler.NewHttpHandler(userManager)
+
+	classManager := classUsecase.NewHttpManager()
+	classHandler := classHttpHandler.NewHttpHandler(classManager)
+
 	// routes
 	v1 := router.PathPrefix("/api/v1").Subrouter()
 	publicPost := v1.Methods(http.MethodPost).Subrouter()
@@ -40,9 +46,12 @@ func NewRouter() *mux.Router {
 	})
 
 	gets.HandleFunc("/users/me", userHandler.HandleGetMeRequest)
+	gets.HandleFunc("/class", classHandler.HandleGetAll)
 
 	posts.HandleFunc("/users", userHandler.HandlePostStudent)
 	posts.HandleFunc("/users/change-password", userHandler.HandleChangePassword)
+	posts.HandleFunc("/class", classHandler.HandleCreateClass)
+
 	del.HandleFunc("/users/{id}", userHandler.HandleUserDelete)
 	return router
 }

@@ -22,14 +22,15 @@ var dbName = ""
 func Init(dbAddr string, db string) {
 	dbURI = dbAddr
 	dbName = db
-
+	log.Debugf("addr: %s", dbAddr)
+	log.Debugf("db: %s", db)
 	// ping the db once
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	client := connect(ctx)
 	err := client.Ping(ctx, readpref.Primary())
 	if err != nil {
-		log.Errorf("failed to ping database")
+		log.Errorf("failed to ping database: %s", err.Error())
 		os.Exit(1)
 	}
 	if err = client.Disconnect(ctx); err != nil {
@@ -88,6 +89,7 @@ func GetByID(collNamespace string, id string) (bson.M, error) {
 	}
 	return result, nil
 }
+
 func GetByPKey(collNamespace string, pkey string, value string) (bson.M, error) {
 	log.Debugf("db.GeByPKey: %s , %s, %s", dbName, collNamespace, value)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -108,6 +110,32 @@ func GetByPKey(collNamespace string, pkey string, value string) (bson.M, error) 
 	if err != nil {
 		log.Errorf("db.GetByPkey: %s", err.Error())
 		return bson.M{}, err
+	}
+	return result, nil
+}
+
+func GetAll(collNamespace string) ([]bson.M, error) {
+	log.Debugf("db.GetAll: %s", collNamespace)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client := connect(ctx)
+
+	defer func() {
+		if err := client.Disconnect(ctx); err != nil {
+			log.Errorf("failed to close db connection")
+			panic(err)
+		}
+		log.Debugf("db connection closed")
+	}()
+
+	collection := client.Database(dbName).Collection(collNamespace)
+	var result []bson.M
+	cursor, err := collection.Find(ctx, bson.D{})
+	if err != nil {
+		return nil, err
+	}
+	if err = cursor.All(ctx, &result); err != nil {
+		return nil, err
 	}
 	return result, nil
 }

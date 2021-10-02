@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/anish-yadav/lms-api/internal/constants"
 	"github.com/anish-yadav/lms-api/internal/pkg/db"
+	"github.com/anish-yadav/lms-api/internal/pkg/permission"
 	"github.com/anish-yadav/lms-api/internal/util"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,14 +22,21 @@ type UserDb struct {
 }
 
 type User struct {
-	ID    primitive.ObjectID `json:"id" bson:"_id"`
-	Name  string             `json:"name"`
-	Email string             `json:"email"`
-	Type  string             `json:"type"`
+	ID          primitive.ObjectID `json:"id" bson:"_id"`
+	Name        string             `json:"name"`
+	Email       string             `json:"email"`
+	Type        string             `json:"type"`
+	Permissions []string           `json:"permissions"`
 }
 
 func (user *UserDb) ToResponse() *User {
-	return &User{user.ID, user.Name, user.Email, user.Type}
+	var permissions []string
+	per := permission.GetPermissionByName(user.Type)
+	if per != nil {
+		permissions = per.Permissions
+	}
+	// sending permissions array too
+	return &User{user.ID, user.Name, user.Email, user.Type, permissions}
 }
 
 const collection = "users"
