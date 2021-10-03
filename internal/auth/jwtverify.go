@@ -51,7 +51,7 @@ func PermissionMiddleware(next http.Handler) http.Handler {
 		claims := t.Claims.(jwt.MapClaims)
 		data := claims["data"].(map[string]interface{})
 		path := strings.TrimPrefix(r.URL.Path, "/api/v1")
-		reqPermission := RoutePermissionMap[path]
+		reqPermission := PermissionMap[r.Method][path]
 		log.Debugf("permission required for %s : %s", r.URL.Path, reqPermission)
 		userID := data["user_id"]
 		if userID == nil {

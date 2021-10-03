@@ -2,12 +2,19 @@
   "admin": [
     "lms.user.create",
     "lms.user.delete",
-    "lms.user.edit"
+    "lms.user.edit",
+    "lms.user.read",
+    "lms.class.read",
+    "lms.class.create"
   ],
   "student": [
-    "lms.user.edit"
+    "lms.user.edit",
+    "lms.user.read",
+    "lms.class.read"
   ],
   "teacher": [
-    "lms.user.edit"
+    "lms.user.edit",
+    "lms.user.read",
+    "lms.class.read"
   ]
 }

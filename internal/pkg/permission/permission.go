@@ -18,6 +18,10 @@ func NewPermission(name string, p []string) *Permission {
 	return &Permission{name, p}
 }
 
+func ClearDB() error {
+	return db.DelAll(collection)
+}
+
 func GetPermissionByName(name string) *Permission {
 	permissionDB, err := db.GetByPKey(collection, "name", name)
 	if err != nil {

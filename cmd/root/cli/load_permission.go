@@ -19,7 +19,7 @@ func LoadPermissions() *ffcli.Command {
 
 	return &ffcli.Command{
 		Name:       "load-permission",
-		ShortUsage: "lms load-permission populates the permissions db",
+		ShortUsage: "lms load-permission -file permission.json populates the permissions db",
 		FlagSet:    flagset,
 		Exec: func(ctx context.Context, args []string) error {
 			if len(*file) == 0 {
@@ -36,6 +36,10 @@ func populatePermissionTable(path string) error {
 	if err != nil {
 		log.Debugf("populatePermission: %s", err.Error())
 		return errors.New("failed to read file")
+	}
+	if err = permission.ClearDB(); err != nil {
+		log.Errorf("failed to clear db")
+		return err
 	}
 	var permissionMap map[string][]string
 	err = json.Unmarshal(data, &permissionMap)

@@ -228,3 +228,23 @@ func DelByID(collNamespace string, id string) error {
 	log.Debugf("db.DelByID: deleted entities: %s", res.DeletedCount)
 	return nil
 }
+
+func DelAll(collNamespace string) error {
+	log.Debugf("db.DelAll: deleting all for collection: %s", collNamespace)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	client := connect(ctx)
+	defer func() {
+		if err := client.Disconnect(ctx); err != nil {
+			log.Errorf("db.DelAll: failed to close db connection: %s", err.Error())
+			panic(err)
+		}
+		log.Debugf("db.DelAll: db connection closed")
+	}()
+	collection := client.Database(dbName).Collection(collNamespace)
+	_, err := collection.DeleteMany(ctx, bson.D{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
